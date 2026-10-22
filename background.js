@@ -34,6 +34,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else {
     const columns = [
       ["tag", "标签"], ["selector", "选择器"], ["context", "元素上下文"], ["contextUrl", "上下文页面"], ["text", "文本"],
+      ["viewportWidth", "视口宽度"], ["viewportHeight", "视口高度"], ["devicePixelRatio", "设备像素比 DPR"], ["visualScale", "视觉视口缩放"], ["scrollX", "页面滚动 X"], ["scrollY", "页面滚动 Y"],
       ["x", "视口X"], ["y", "视口Y"], ["pageX", "页面X"], ["pageY", "页面Y"],
       ["width", "可视宽度"], ["height", "可视高度"], ["cssWidth", "CSS宽度"], ["cssHeight", "CSS高度"],
       ["margin", "外边距"], ["padding", "内边距"], ["border", "边框"], ["boxSizing", "box-sizing"],
@@ -45,6 +46,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       ["imageSrc", "图片地址"], ["naturalWidth", "图片原始宽度"], ["naturalHeight", "图片原始高度"], ["pairwiseGaps", "元素间距"]
     ];
     const quote = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+    const page = message.data.page || {};
+    const pageValue = {
+      viewportWidth: page.viewport?.width,
+      viewportHeight: page.viewport?.height,
+      devicePixelRatio: page.viewport?.devicePixelRatio,
+      visualScale: page.viewport?.visualScale,
+      scrollX: page.scroll?.x,
+      scrollY: page.scroll?.y
+    };
     content = [columns.map(([, label]) => quote(label)).join(",")];
     for (let index = 0; index < rows.length; index++) {
       const row = rows[index];
@@ -53,7 +63,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           return quote((message.data.pairwiseGaps || []).filter((gap) => gap.from === index + 1 || gap.to === index + 1)
             .map((gap) => `${gap.from}↔${gap.to}:横${gap.horizontal}px/纵${gap.vertical}px`).join("; "));
         }
-        const value = row[key];
+        const value = row[key] ?? pageValue[key];
         return quote(value && typeof value === "object" ? JSON.stringify(value) : value);
       }).join(","));
     }

@@ -10,6 +10,7 @@
   let showBoxModel = true;
   let visualUpdateQueued = false;
   let styleRuleCache = new WeakMap();
+  const panelPreferenceKey = `panel-preferences:${location.origin}`;
 
   const STYLE_GROUPS = [
     { title: "尺寸与盒模型", properties: [["width", "宽度"], ["height", "高度"], ["min-width", "最小宽度"], ["max-width", "最大宽度"], ["min-height", "最小高度"], ["max-height", "最大高度"], ["box-sizing", "盒模型"], ["margin-top", "上外边距"], ["margin-right", "右外边距"], ["margin-bottom", "下外边距"], ["margin-left", "左外边距"], ["padding-top", "上内边距"], ["padding-right", "右内边距"], ["padding-bottom", "下内边距"], ["padding-left", "左内边距"], ["border-top-width", "上边框"], ["border-right-width", "右边框"], ["border-bottom-width", "下边框"], ["border-left-width", "左边框"], ["border-radius", "圆角"]] },
@@ -38,7 +39,12 @@
     .box-zone.border { background: #f2d45088; }
     .box-zone.padding { background: #32b77b55; }
     .box-zone.content { background: #3485ef18; outline: 1px solid #3485efaa; }
-    .box-legend { position: fixed; z-index: 6; max-width: 240px; padding: 5px 7px; border-radius: 5px; color: #344254; background: #fff; font: 9px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; box-shadow: 0 2px 8px #10233e33; pointer-events: none; }
+    .box-legend { position: fixed; z-index: 6; max-width: 300px; padding: 7px 9px; border: 1px solid #e2e8f0; border-radius: 7px; color: #344254; background: #fff; font: 10px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; box-shadow: 0 2px 8px #10233e33; pointer-events: none; }
+    .box-legend-title { display: block; margin-bottom: 4px; color: #243144; font-weight: 700; }
+    .box-legend-row { display: flex; align-items: center; gap: 5px; min-height: 14px; }
+    .box-legend-swatch { width: 8px; height: 8px; flex: 0 0 8px; border-radius: 2px; }
+    .box-legend-name { width: 42px; flex: 0 0 42px; color: #667385; }
+    .box-legend-value { color: #27364a; font: 9px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; overflow-wrap: anywhere; }
     .ruler-line { position: fixed; z-index: 1; pointer-events: none; border-color: #f03c62; border-style: dashed; }
     .ruler-line.horizontal { height: 0; border-width: 1px 0 0; }
     .ruler-line.vertical { width: 0; border-width: 0 0 0 1px; }
@@ -118,7 +124,7 @@
     frame.className = "frame";
     frame.innerHTML = `<div class="highlight hover"></div><section class="panel" aria-label="页面布局测量器">
       <div class="head" title="拖动标题栏移动面板"><div class="title"><span class="badge">尺</span>页面布局测量器</div><button class="head-action collapse" title="收起面板" aria-label="收起面板">−</button><button class="head-action close" title="关闭面板" aria-label="关闭">×</button></div>
-      <div class="toolbar"><button class="tool mode">开始测量</button><button class="tool box-toggle on">盒模型：开</button><button class="tool clear">清空选区</button></div>
+      <div class="toolbar"><button class="tool mode">开始测量</button><button class="tool box-toggle on" title="在悬停或选中的元素上显示盒模型颜色叠层">盒模型：开</button><button class="tool clear">清空选区</button></div>
       <div class="summary">已选中 <b class="count">0</b> 个元素</div>
       <div class="list"></div><div class="gaps" hidden></div>
       <details class="principles"><summary>测量原理与样式说明</summary><div class="principles-body">
@@ -132,7 +138,7 @@
     shadow.append(style, frame);
     document.documentElement.append(host);
     shadow.querySelector(".mode").addEventListener("click", () => setInspecting(!inspecting));
-    shadow.querySelector(".box-toggle").addEventListener("click", () => { showBoxModel = !showBoxModel; render(); });
+    shadow.querySelector(".box-toggle").addEventListener("click", () => { showBoxModel = !showBoxModel; render(); persistPanelPreferences(); });
     shadow.querySelector(".clear").addEventListener("click", clearSelections);
     shadow.querySelector(".collapse").addEventListener("click", (event) => {
       const panel = shadow.querySelector(".panel");
@@ -140,11 +146,53 @@
       event.currentTarget.textContent = collapsed ? "+" : "−";
       event.currentTarget.title = collapsed ? "展开面板" : "收起面板";
       event.currentTarget.setAttribute("aria-label", event.currentTarget.title);
-      requestAnimationFrame(keepPanelInViewport);
+      requestAnimationFrame(() => { keepPanelInViewport(); persistPanelPreferences(); });
     });
     shadow.querySelector(".close").addEventListener("click", () => { setInspecting(false); host.remove(); });
     makePanelDraggable(shadow.querySelector(".panel"), shadow.querySelector(".head"));
     render();
+    restorePanelPreferences(shadow.querySelector(".panel"));
+  }
+
+  function persistPanelPreferences() {
+    if (typeof chrome === "undefined" || !chrome.storage?.local) return;
+    const panel = shadow?.querySelector(".panel");
+    if (!panel) return;
+    const rect = panel.getBoundingClientRect();
+    const preferences = {
+      left: Math.round(rect.left),
+      top: Math.round(rect.top),
+      collapsed: panel.classList.contains("collapsed"),
+      showBoxModel
+    };
+    try {
+      chrome.storage.local.set({ [panelPreferenceKey]: preferences }, () => { void chrome.runtime.lastError; });
+    } catch { /* Storage may be unavailable in a restricted browser context. */ }
+  }
+
+  function restorePanelPreferences(panel) {
+    if (typeof chrome === "undefined" || !chrome.storage?.local) return;
+    try {
+      chrome.storage.local.get(panelPreferenceKey, (stored) => {
+        if (chrome.runtime.lastError || !panel.isConnected) return;
+        const preferences = stored?.[panelPreferenceKey];
+        if (!preferences || typeof preferences !== "object") return;
+        if (Number.isFinite(preferences.left) && Number.isFinite(preferences.top)) {
+          panel.style.left = `${preferences.left}px`;
+          panel.style.top = `${preferences.top}px`;
+          panel.style.right = "auto";
+        }
+        const collapsed = Boolean(preferences.collapsed);
+        panel.classList.toggle("collapsed", collapsed);
+        const collapseButton = shadow.querySelector(".collapse");
+        collapseButton.textContent = collapsed ? "+" : "−";
+        collapseButton.title = collapsed ? "展开面板" : "收起面板";
+        collapseButton.setAttribute("aria-label", collapseButton.title);
+        if (typeof preferences.showBoxModel === "boolean") showBoxModel = preferences.showBoxModel;
+        keepPanelInViewport();
+        render();
+      });
+    } catch { /* Keep default panel settings when local storage is unavailable. */ }
   }
 
   function makePanelDraggable(panel, head) {
@@ -164,6 +212,7 @@
         head.removeEventListener("pointermove", onMove);
         head.removeEventListener("pointerup", onUp);
         head.removeEventListener("pointercancel", onUp);
+        persistPanelPreferences();
       };
       event.preventDefault();
       head.classList.add("dragging");
@@ -449,6 +498,8 @@
     const boxButton = shadow.querySelector(".box-toggle");
     boxButton.textContent = `盒模型：${showBoxModel ? "开" : "关"}`;
     boxButton.classList.toggle("on", showBoxModel);
+    boxButton.title = showBoxModel ? "隐藏盒模型颜色叠层" : "在悬停或选中的元素上显示盒模型颜色叠层";
+    boxButton.setAttribute("aria-label", boxButton.title);
   }
 
   function renderHierarchy(item) {
@@ -670,9 +721,40 @@
     addZone("content", innerLeft + padding.left, innerTop + padding.top, Math.max(0, innerWidth - padding.left - padding.right), Math.max(0, innerHeight - padding.top - padding.bottom));
     const legend = document.createElement("div");
     legend.className = "box-legend";
-    legend.textContent = `橙外边距 · 黄边框 · 绿内边距 · 蓝内容${style.transform !== "none" ? "（transform 下为近似边界）" : ""}`;
-    legend.style.cssText += `left:${Math.max(4, rect.left)}px;top:${Math.min(window.innerHeight - 24, Math.max(4, rect.bottom + 5))}px`;
+    const title = document.createElement("strong");
+    title.className = "box-legend-title";
+    title.textContent = `盒模型 · CSS px${style.transform !== "none" ? "（transform 下为近似边界）" : ""}`;
+    legend.append(title);
+    const sideNames = { top: "上", right: "右", bottom: "下", left: "左" };
+    const addLegendRow = (name, color, value) => {
+      const row = document.createElement("div");
+      row.className = "box-legend-row";
+      const swatch = document.createElement("span");
+      swatch.className = "box-legend-swatch";
+      swatch.style.background = color;
+      const label = document.createElement("span");
+      label.className = "box-legend-name";
+      label.textContent = name;
+      const text = document.createElement("span");
+      text.className = "box-legend-value";
+      text.textContent = value;
+      row.append(swatch, label, text);
+      legend.append(row);
+    };
+    const sides = (prefix, propertySuffix = "") => ["top", "right", "bottom", "left"].map((side) => `${sideNames[side]} ${style.getPropertyValue(`${prefix}-${side}${propertySuffix}`) || "0px"}`).join(" · ");
+    addLegendRow("外边距", "#f4a340", sides("margin"));
+    addLegendRow("边框", "#d6b91f", sides("border", "-width"));
+    addLegendRow("内边距", "#32b77b", sides("padding"));
+    addLegendRow("内容区", "#3485ef", `${round(Math.max(0, innerWidth - padding.left - padding.right))} × ${round(Math.max(0, innerHeight - padding.top - padding.bottom))}`);
+    legend.style.cssText += "left:4px;top:4px";
     frame.append(legend);
+    const legendRect = legend.getBoundingClientRect();
+    const left = Math.min(Math.max(4, rect.left), Math.max(4, window.innerWidth - legendRect.width - 4));
+    const below = rect.bottom + 5;
+    const preferredTop = below + legendRect.height <= window.innerHeight - 4 ? below : rect.top - legendRect.height - 5;
+    const top = Math.min(Math.max(4, preferredTop), Math.max(4, window.innerHeight - legendRect.height - 4));
+    legend.style.left = `${left}px`;
+    legend.style.top = `${top}px`;
   }
 
   function gapBetween(a, b) {
@@ -765,7 +847,7 @@
     }
     return {
       data: {
-        page: { title: document.title, url: location.href, capturedAt: new Date().toISOString(), viewport: { width: window.innerWidth, height: window.innerHeight }, scroll: { x: window.scrollX, y: window.scrollY } },
+        page: { title: document.title, url: location.href, capturedAt: new Date().toISOString(), viewport: { width: window.innerWidth, height: window.innerHeight, devicePixelRatio: round(window.devicePixelRatio), visualScale: round(window.visualViewport?.scale || 1) }, scroll: { x: window.scrollX, y: window.scrollY } },
         elements, pairwiseGaps: gaps
       },
       state: getState()
@@ -817,7 +899,7 @@
     doc.defaultView?.addEventListener("scroll", () => scheduleVisualUpdate(true), true);
     doc.defaultView?.addEventListener("resize", () => {
       scheduleVisualUpdate(true);
-      if (doc === document) keepPanelInViewport();
+      if (doc === document) { keepPanelInViewport(); persistPanelPreferences(); }
     });
     const Observer = doc.defaultView?.MutationObserver;
     if (Observer && doc.documentElement) {

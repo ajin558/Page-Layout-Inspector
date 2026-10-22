@@ -3,6 +3,7 @@ const statusText = document.getElementById("statusText");
 const countText = document.getElementById("countText");
 const message = document.getElementById("message");
 let activeTabId = null;
+document.getElementById("versionText").textContent = chrome.runtime.getManifest().version;
 
 function setMessage(text = "") { message.textContent = text; }
 
@@ -21,6 +22,12 @@ async function getActiveTab() {
 
 async function sendToPage(messageObject) {
   const tab = await getActiveTab();
+  if (tab.url?.startsWith("file://")) {
+    throw new Error("本地文件需要在扩展详情页开启“允许访问文件网址”。");
+  }
+  if (tab.url && !/^https?:\/\//i.test(tab.url)) {
+    throw new Error("浏览器内部页、扩展页和应用商店页面受浏览器保护，无法注入测量器。请切换到普通 HTTP/HTTPS 网页。");
+  }
   try {
     await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["content.js"] });
   } catch (error) {

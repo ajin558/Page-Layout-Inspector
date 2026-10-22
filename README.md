@@ -12,19 +12,20 @@ A Chrome Manifest V3 extension for measuring element dimensions, positions, box 
 - 对含文字的元素显示字体、字号、字重、行高、字距、颜色和对齐方式。
 - 展开元素详情查看分组后的常用计算 CSS 样式、匹配规则及近层祖先的继承来源。
 - 在页面检查器中查看尺寸、坐标、CSS 级联和间距的测量原理说明。
-- 用颜色叠层区分外边距、边框、内边距和内容区域；悬停时显示尺寸标签及最近邻间距标尺。
+- 用颜色叠层区分外边距、边框、内边距和内容区域，并显示四边数值；悬停时显示尺寸标签及最近邻间距标尺。
 - 面板标题栏可拖动到不遮挡内容的位置，也可以收起成小标题栏。
+- 按网站来源记住面板位置、收起状态和盒模型显示偏好；弹窗显示扩展版本并给出页面访问诊断。
 - 从元素卡片复制计算样式 CSS，并通过父级/子级按钮沿 DOM 层级调整选区。
 - 对图片显示图片地址与原始像素尺寸。
 - 同时选择多个元素时，计算两两之间的横向和纵向最小边界距离。
 - 页面滚动或调整窗口大小后，选区的视口坐标、可视尺寸和间距会自动刷新。
-- 导出 JSON 或 CSV 文件。
+- 导出 JSON 或 CSV 文件，附带视口尺寸、设备像素比、视觉视口缩放和滚动位置。
 - 导出带元素编号标记的当前视口 PNG 截图。
 
 ## 安装 | Installation
 
 1. 下载并解压项目，或克隆仓库。
-2. 在 Chrome 中打开 `chrome://extensions`，启用“开发者模式”。
+2. 在 Chrome 中打开 `chrome://extensions`，或在 Edge 中打开 `edge://extensions`，启用“开发者模式”。
 3. 点击“加载已解压的扩展程序”，选择项目文件夹。
 4. 打开一个普通网站，点击工具栏中的“页面布局测量器”，再点击“开始测量”。
 
@@ -38,8 +39,9 @@ If an older copy is installed, reload the extension from each browser's extensio
 
 1. 点击扩展弹窗中的“开始测量”。
 2. 点击网页中的元素以加入清单；再次点击已选元素可将其移除。
-3. 使用页面右上角面板查看测量结果；按 `Esc` 或点击“停止测量”退出。
-4. 展开 CSS 规则来源可按需扫描当前页的可读样式表；也可从弹窗导出 JSON、CSV 或当前视口标注截图。
+3. 悬停或选中元素时查看盒模型颜色叠层：橙色外边距、黄色边框、绿色内边距、蓝色内容区；图例列出各边数值。
+4. 使用页面测量面板查看结果；按 `Esc` 或点击“停止测量”退出。
+5. 展开 CSS 规则来源可按需扫描当前页的可读样式表；也可从弹窗导出 JSON、CSV 或当前视口标注截图。
 
 JSON includes page metadata, element measurements, commonly used computed-style values, readable matching CSS declarations, element context and pairwise gaps. CSV includes the computed styles and rule-source data as JSON cells, and is intended for spreadsheet review. The annotated PNG captures the currently visible viewport and selected-element number labels.
 
@@ -60,7 +62,7 @@ JSON includes page metadata, element measurements, commonly used computed-style 
 - 标注截图只在用户点击截图导出后截取当前可见视口，并由浏览器下载到本地。
 - 导出文件会包含页面 URL、所选元素的文字摘要、图片地址、计算样式及浏览器允许读取的 CSS 规则来源。分享导出文件前，请检查是否包含敏感信息。
 - 关闭或刷新页面后，当前选择会清空。插件不会把测量结果写入云端或持久化存储。
-- `activeTab` 用于临时访问当前标签页，`scripting` 用于按需注入检查器，`downloads` 用于保存用户主动请求的导出文件。
+- `activeTab` 用于临时访问当前标签页，`scripting` 用于按需注入检查器，`downloads` 用于保存用户主动请求的导出文件，`storage` 仅用于本地保存面板偏好。
 
 ## 限制 | Limitations
 
@@ -75,7 +77,11 @@ JSON includes page metadata, element measurements, commonly used computed-style 
 
 本项目无构建步骤。修改源文件后，在 `chrome://extensions` 中点击扩展的刷新按钮，再刷新目标网页。
 
-No build step is required. After editing source files, reload the extension from `chrome://extensions` and refresh the target page.
+No build step is required. After editing source files, reload the extension from `chrome://extensions` or `edge://extensions`, then refresh the target page.
+
+后续功能优先级见 [ROADMAP.md](ROADMAP.md)。
+
+See [ROADMAP.md](ROADMAP.md) for planned improvements.
 
 ## 许可证 | License
 
