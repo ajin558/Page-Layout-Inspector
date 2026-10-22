@@ -23,9 +23,15 @@ async function sendToPage(messageObject) {
   const tab = await getActiveTab();
   try {
     await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["content.js"] });
+  } catch (error) {
+    const detail = error?.message || String(error);
+    throw new Error(`脚本注入失败：${detail}。如果刚安装或更新扩展，请先在扩展管理页重载扩展，再刷新此网页。`);
+  }
+  try {
     return await chrome.tabs.sendMessage(tab.id, messageObject);
-  } catch {
-    throw new Error("无法在此页面运行。请切换到普通网站页面；浏览器内部页面和网上应用店不支持测量。");
+  } catch (error) {
+    const detail = error?.message || String(error);
+    throw new Error(`页面脚本没有响应：${detail}。请重载扩展并刷新此网页后重试。`);
   }
 }
 
@@ -38,7 +44,7 @@ async function refresh() {
   } catch (error) {
     statusDot.className = "status-dot error";
     statusText.textContent = "无法连接当前网页";
-    countText.textContent = "仅在用户打开插件后检查当前网页";
+    countText.textContent = "重载扩展并刷新网页后重试";
     setMessage(error.message);
   }
 }
