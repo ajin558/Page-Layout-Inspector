@@ -1,0 +1,42 @@
+* { box-sizing: border-box; }
+body {
+  width: 320px;
+  margin: 0;
+  color: #17212b;
+  background: #f5f7fa;
+  font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.app { padding: 18px; }
+header { display: flex; align-items: center; gap: 11px; margin-bottom: 17px; }
+.mark {
+  display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px;
+  color: white; background: linear-gradient(145deg, #1268e8, #35a1ff); font-size: 18px; font-weight: 700;
+  box-shadow: 0 5px 14px #1268e833;
+}
+h1 { margin: 0; font-size: 15px; letter-spacing: .1px; }
+header p { margin: 2px 0 0; color: #738092; font-size: 11px; }
+.page-card {
+  display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid #e6ebf1;
+  border-radius: 11px; background: white; margin-bottom: 13px;
+}
+.status-dot { width: 9px; height: 9px; flex: 0 0 9px; border-radius: 50%; background: #aab4c0; }
+.status-dot.active { background: #20ad70; box-shadow: 0 0 0 4px #20ad7018; }
+.status-dot.error { background: #e05252; }
+.page-info { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.page-info strong { font-size: 12px; font-weight: 600; }
+.page-info span { color: #7b8795; font-size: 11px; }
+.actions { display: flex; gap: 8px; margin-bottom: 8px; }
+button { border: 0; cursor: pointer; font: inherit; transition: transform .12s, background .12s; }
+button:active { transform: translateY(1px); }
+.actions button { flex: 1; height: 36px; border-radius: 8px; font-weight: 600; }
+.primary { color: white; background: #1769e8; }
+.primary:hover { background: #0d5bd3; }
+.secondary { color: #344254; background: #e8edf3; }
+.secondary:hover { background: #dfe6ee; }
+.export-actions { margin-top: 12px; }
+.export { color: #155ac1; background: #e7f0ff; }
+.export:hover { background: #d9e8ff; }
+.clear { width: 100%; padding: 8px; border-radius: 7px; color: #667385; background: transparent; }
+.clear:hover { color: #354355; background: #e9edf2; }
+.hint { margin: 9px 2px 0; color: #8994a2; font-size: 10px; }
+.message { min-height: 15px; margin: 7px 2px 0; color: #d14b4b; font-size: 11px; }

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>页面布局测量器</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="mark">尺</div>
+      <div>
+        <h1>页面布局测量器</h1>
+        <p>选元素，读布局，导出清单</p>
+      </div>
+    </header>
+    <section class="page-card">
+      <div class="status-dot" id="statusDot"></div>
+      <div class="page-info">
+        <strong id="statusText">正在连接当前网页…</strong>
+        <span id="countText">已选中 0 个元素</span>
+      </div>
+    </section>
+    <div class="actions">
+      <button class="primary" id="startButton">开始测量</button>
+      <button class="secondary" id="stopButton">停止测量</button>
+    </div>
+    <div class="actions export-actions">
+      <button class="export" id="jsonButton">导出 JSON</button>
+      <button class="export" id="csvButton">导出 CSV</button>
+    </div>
+    <button class="clear" id="clearButton">清空当前选区</button>
+    <p class="hint">在页面上点击元素即可加入清单。按 Esc 结束测量。</p>
+    <p class="message" id="message" aria-live="polite"></p>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
