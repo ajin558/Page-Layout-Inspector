@@ -20,7 +20,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       ["rowGap", "row-gap"], ["columnGap", "column-gap"], ["flexDirection", "flex-direction"], ["flexWrap", "flex-wrap"],
       ["justifyContent", "justify-content"], ["alignItems", "align-items"], ["gridTemplateColumns", "grid-template-columns"], ["gridTemplateRows", "grid-template-rows"],
       ["fontFamily", "字体"], ["fontSize", "字号"], ["fontWeight", "字重"], ["lineHeight", "行高"],
-      ["color", "文字颜色"], ["imageSrc", "图片地址"], ["naturalWidth", "图片原始宽度"], ["naturalHeight", "图片原始高度"], ["pairwiseGaps", "元素间距"]
+      ["color", "文字颜色"], ["computedStyles", "常用计算样式"], ["styleInfo", "CSS规则与继承来源"],
+      ["imageSrc", "图片地址"], ["naturalWidth", "图片原始宽度"], ["naturalHeight", "图片原始高度"], ["pairwiseGaps", "元素间距"]
     ];
     const quote = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
     content = [columns.map(([, label]) => quote(label)).join(",")];

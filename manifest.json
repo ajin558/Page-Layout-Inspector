@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "页面布局测量器",
   "short_name": "布局测量",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "在网页上测量元素尺寸、位置、间距、盒模型和布局样式，并导出清单。",
   "permissions": ["activeTab", "scripting", "downloads"],
   "action": {
