@@ -63,9 +63,10 @@ document.getElementById("clearButton").addEventListener("click", async () => {
 });
 
 async function exportLayout(format) {
-  setMessage("");
+  setMessage("正在整理测量值与 CSS 来源…");
   try {
-    const response = await sendToPage({ type: "GET_LAYOUT" });
+    const response = await sendToPage({ type: "GET_LAYOUT", includeStyleRules: true });
+    if (response?.error) throw new Error(response.error);
     if (!response?.data?.elements?.length) throw new Error("请先在网页上选择至少一个元素。");
     const result = await chrome.runtime.sendMessage({ type: "DOWNLOAD_LAYOUT", format, data: response.data });
     if (!result?.ok) throw new Error(result?.error || "导出失败，请重试。");
@@ -76,4 +77,15 @@ async function exportLayout(format) {
 
 document.getElementById("jsonButton").addEventListener("click", () => exportLayout("json"));
 document.getElementById("csvButton").addEventListener("click", () => exportLayout("csv"));
+document.getElementById("screenshotButton").addEventListener("click", async () => {
+  setMessage("");
+  try {
+    const tab = await getActiveTab();
+    const state = await sendToPage({ type: "GET_STATE" });
+    if (!state?.selectedCount) throw new Error("请先开始测量并至少选中一个元素，再导出标注截图。");
+    const result = await chrome.runtime.sendMessage({ type: "CAPTURE_ANNOTATED_SCREENSHOT", tabId: tab.id });
+    if (!result?.ok) throw new Error(result?.error || "截图导出失败，请重试。");
+    setMessage("已导出当前视口的标注截图。");
+  } catch (error) { setMessage(error.message); }
+});
 refresh();

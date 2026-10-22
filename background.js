@@ -1,4 +1,25 @@
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type === "CAPTURE_ANNOTATED_SCREENSHOT" && Number.isInteger(message.tabId)) {
+    chrome.tabs.get(message.tabId, (tab) => {
+      if (chrome.runtime.lastError || typeof tab?.windowId !== "number") {
+        sendResponse({ ok: false, error: chrome.runtime.lastError?.message || "无法找到当前浏览器窗口。" });
+        return;
+      }
+      chrome.tabs.captureVisibleTab(tab.windowId, { format: "png" }, (dataUrl) => {
+        if (chrome.runtime.lastError || !dataUrl) {
+          sendResponse({ ok: false, error: chrome.runtime.lastError?.message || "浏览器未能截取当前页面。" });
+          return;
+        }
+        const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+        chrome.downloads.download({ url: dataUrl, filename: `page-layout-annotated-${stamp}.png`, saveAs: true }, (downloadId) => {
+          const error = chrome.runtime.lastError;
+          sendResponse(error ? { ok: false, error: error.message } : { ok: true, downloadId });
+        });
+      });
+    });
+    return true;
+  }
+
   if (message?.type !== "DOWNLOAD_LAYOUT" || !message.data || !message.format) return;
 
   const rows = Array.isArray(message.data.elements) ? message.data.elements : [];
@@ -12,7 +33,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     mime = "application/json;charset=utf-8";
   } else {
     const columns = [
-      ["tag", "标签"], ["selector", "选择器"], ["text", "文本"],
+      ["tag", "标签"], ["selector", "选择器"], ["context", "元素上下文"], ["contextUrl", "上下文页面"], ["text", "文本"],
       ["x", "视口X"], ["y", "视口Y"], ["pageX", "页面X"], ["pageY", "页面Y"],
       ["width", "可视宽度"], ["height", "可视高度"], ["cssWidth", "CSS宽度"], ["cssHeight", "CSS高度"],
       ["margin", "外边距"], ["padding", "内边距"], ["border", "边框"], ["boxSizing", "box-sizing"],

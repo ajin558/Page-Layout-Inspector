@@ -36,6 +36,7 @@ button:active { transform: translateY(1px); }
 .export-actions { margin-top: 12px; }
 .export { color: #155ac1; background: #e7f0ff; }
 .export:hover { background: #d9e8ff; }
+.screenshot-export { width: 100%; min-height: 34px; margin: 0 0 5px; border-radius: 8px; font-weight: 600; }
 .clear { width: 100%; padding: 8px; border-radius: 7px; color: #667385; background: transparent; }
 .clear:hover { color: #354355; background: #e9edf2; }
 .hint { margin: 9px 2px 0; color: #8994a2; font-size: 10px; }
