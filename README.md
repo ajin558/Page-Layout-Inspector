@@ -13,6 +13,7 @@ A Chrome Manifest V3 extension for measuring element dimensions, positions, box 
 - 展开元素详情查看分组后的常用计算 CSS 样式、匹配规则及近层祖先的继承来源。
 - 在页面检查器中查看尺寸、坐标、CSS 级联和间距的测量原理说明。
 - 用颜色叠层区分外边距、边框、内边距和内容区域；悬停时显示尺寸标签及最近邻间距标尺。
+- 面板标题栏可拖动到不遮挡内容的位置，也可以收起成小标题栏。
 - 从元素卡片复制计算样式 CSS，并通过父级/子级按钮沿 DOM 层级调整选区。
 - 对图片显示图片地址与原始像素尺寸。
 - 同时选择多个元素时，计算两两之间的横向和纵向最小边界距离。
@@ -27,7 +28,11 @@ A Chrome Manifest V3 extension for measuring element dimensions, positions, box 
 3. 点击“加载已解压的扩展程序”，选择项目文件夹。
 4. 打开一个普通网站，点击工具栏中的“页面布局测量器”，再点击“开始测量”。
 
+如果已安装旧版本，请在 Chrome 和 Edge 各自的扩展管理页刷新扩展，再刷新目标网页；两种浏览器需要分别更新。旧版弹窗可能只显示通用的页面错误提示。
+
 The extension requests access to the active tab only after you open its popup. It uses `scripting` to inject the inspector into that tab and `downloads` to save exports. It does not request persistent access to every website.
+
+If an older copy is installed, reload the extension from each browser's extension manager, then refresh the target webpage. Chrome and Edge maintain separate extension installations.
 
 ## 使用 | Usage
 

@@ -46,10 +46,14 @@
     .panel { position: fixed; z-index: 2147483647; top: 16px; right: 16px; width: 338px; max-height: calc(100vh - 32px); display: flex; flex-direction: column; overflow: hidden;
       pointer-events: auto; border: 1px solid #e1e7ef; border-radius: 13px; background: #fff; box-shadow: 0 14px 48px #10233e2b;
       color: #17212b; font-size: 12px; line-height: 1.45; }
-    .head { display: flex; align-items: center; justify-content: space-between; padding: 12px 13px; border-bottom: 1px solid #edf0f4; background: #fbfcfe; }
+    .panel.collapsed { width: 190px; }
+    .panel.collapsed .toolbar, .panel.collapsed .summary, .panel.collapsed .list, .panel.collapsed .gaps, .panel.collapsed .principles, .panel.collapsed .foot { display: none !important; }
+    .head { display: flex; align-items: center; justify-content: space-between; gap: 7px; padding: 12px 13px; border-bottom: 1px solid #edf0f4; background: #fbfcfe; cursor: grab; user-select: none; }
+    .head.dragging { cursor: grabbing; }
     .title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; }
     .badge { width: 23px; height: 23px; display: grid; place-items: center; border-radius: 7px; color: white; background: #1769e8; }
-    .close { border: 0; background: transparent; color: #8390a0; cursor: pointer; font-size: 18px; line-height: 1; }
+    .head-action { flex: 0 0 auto; width: 24px; height: 24px; border: 0; border-radius: 5px; background: transparent; color: #8390a0; cursor: pointer; font-size: 17px; line-height: 1; }
+    .head-action:hover { background: #edf1f6; color: #344254; }
     .toolbar { display: flex; gap: 6px; padding: 10px 12px 8px; }
     button { font: inherit; cursor: pointer; }
     .tool { border: 0; border-radius: 7px; padding: 7px 9px; color: #235bb1; background: #eaf2ff; font-size: 11px; font-weight: 600; }
@@ -113,7 +117,7 @@
     const frame = document.createElement("div");
     frame.className = "frame";
     frame.innerHTML = `<div class="highlight hover"></div><section class="panel" aria-label="页面布局测量器">
-      <div class="head"><div class="title"><span class="badge">尺</span>页面布局测量器</div><button class="close" title="关闭面板" aria-label="关闭">×</button></div>
+      <div class="head" title="拖动标题栏移动面板"><div class="title"><span class="badge">尺</span>页面布局测量器</div><button class="head-action collapse" title="收起面板" aria-label="收起面板">−</button><button class="head-action close" title="关闭面板" aria-label="关闭">×</button></div>
       <div class="toolbar"><button class="tool mode">开始测量</button><button class="tool box-toggle on">盒模型：开</button><button class="tool clear">清空选区</button></div>
       <div class="summary">已选中 <b class="count">0</b> 个元素</div>
       <div class="list"></div><div class="gaps" hidden></div>
@@ -130,8 +134,52 @@
     shadow.querySelector(".mode").addEventListener("click", () => setInspecting(!inspecting));
     shadow.querySelector(".box-toggle").addEventListener("click", () => { showBoxModel = !showBoxModel; render(); });
     shadow.querySelector(".clear").addEventListener("click", clearSelections);
+    shadow.querySelector(".collapse").addEventListener("click", (event) => {
+      const panel = shadow.querySelector(".panel");
+      const collapsed = panel.classList.toggle("collapsed");
+      event.currentTarget.textContent = collapsed ? "+" : "−";
+      event.currentTarget.title = collapsed ? "展开面板" : "收起面板";
+      event.currentTarget.setAttribute("aria-label", event.currentTarget.title);
+      requestAnimationFrame(keepPanelInViewport);
+    });
     shadow.querySelector(".close").addEventListener("click", () => { setInspecting(false); host.remove(); });
+    makePanelDraggable(shadow.querySelector(".panel"), shadow.querySelector(".head"));
     render();
+  }
+
+  function makePanelDraggable(panel, head) {
+    head.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0 || event.target.closest("button")) return;
+      const rect = panel.getBoundingClientRect();
+      const startX = event.clientX, startY = event.clientY;
+      const onMove = (moveEvent) => {
+        const maxLeft = Math.max(0, window.innerWidth - panel.offsetWidth);
+        const maxTop = Math.max(0, window.innerHeight - panel.offsetHeight);
+        panel.style.left = `${Math.min(maxLeft, Math.max(0, rect.left + moveEvent.clientX - startX))}px`;
+        panel.style.top = `${Math.min(maxTop, Math.max(0, rect.top + moveEvent.clientY - startY))}px`;
+        panel.style.right = "auto";
+      };
+      const onUp = () => {
+        head.classList.remove("dragging");
+        head.removeEventListener("pointermove", onMove);
+        head.removeEventListener("pointerup", onUp);
+        head.removeEventListener("pointercancel", onUp);
+      };
+      event.preventDefault();
+      head.classList.add("dragging");
+      head.setPointerCapture(event.pointerId);
+      head.addEventListener("pointermove", onMove);
+      head.addEventListener("pointerup", onUp);
+      head.addEventListener("pointercancel", onUp);
+    });
+  }
+
+  function keepPanelInViewport() {
+    const panel = shadow?.querySelector(".panel");
+    if (!panel?.style.left) return;
+    const rect = panel.getBoundingClientRect();
+    panel.style.left = `${Math.min(Math.max(0, window.innerWidth - panel.offsetWidth), Math.max(0, rect.left))}px`;
+    panel.style.top = `${Math.min(Math.max(0, window.innerHeight - panel.offsetHeight), Math.max(0, rect.top))}px`;
   }
 
   function rectOf(element) {
@@ -394,7 +442,7 @@
     renderGaps();
     const foot = shadow.querySelector(".foot");
     foot.className = `foot${inspecting ? " on" : ""}`;
-    foot.textContent = inspecting ? "测量模式已开启 · 点击元素加入清单 · Esc 停止" : "点击“开始测量”后选择元素 · 可在插件弹窗导出";
+    foot.textContent = inspecting ? "点击页面选元素 · 拖标题栏移动 · Esc 停止" : "拖标题栏移动 · 点击“开始测量”后选元素";
     const mode = shadow.querySelector(".mode");
     mode.textContent = inspecting ? "停止测量" : "开始测量";
     mode.classList.toggle("off", inspecting);
@@ -767,7 +815,10 @@
     doc.addEventListener("click", handlePageClick, true);
     doc.addEventListener("keydown", (event) => { if (event.key === "Escape" && inspecting) setInspecting(false); }, true);
     doc.defaultView?.addEventListener("scroll", () => scheduleVisualUpdate(true), true);
-    doc.defaultView?.addEventListener("resize", () => scheduleVisualUpdate(true));
+    doc.defaultView?.addEventListener("resize", () => {
+      scheduleVisualUpdate(true);
+      if (doc === document) keepPanelInViewport();
+    });
     const Observer = doc.defaultView?.MutationObserver;
     if (Observer && doc.documentElement) {
       const observer = new Observer((records) => {
